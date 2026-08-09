@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django
+backend/db.sqlite3
+*.log
+
+# Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Project files & Documentation (Private)
+docx_output.txt
+Project PRD.pdf
+WorkForge Architecture.docx
+*.pdf
+*.docx
+
+# Secrets
+.env
+.env.local
+
+# Node (for frontend later)
+node_modules/
+dist/
