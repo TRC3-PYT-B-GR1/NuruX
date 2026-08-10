@@ -1,9 +1,10 @@
 from django.db import models
-from employees.models import Employee
+from apps.employees.models import Employee
+from django.conf import settings
 
 class SalaryStructure(models.Model):
     employee = models.OneToOneField(
-        Employee,
+        'employees.Employee',
         on_delete=models.CASCADE,
         related_name='salary_structure'
     )
@@ -21,7 +22,7 @@ class SalaryStructure(models.Model):
 class PayrollRun(models.Model):
     month = models.DateField(help_text="The month and year for this payroll run (usually first day of month)")
     processed_by = models.ForeignKey(
-        'core.User',
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True
@@ -39,7 +40,7 @@ class Payslip(models.Model):
         related_name='payslips'
     )
     employee = models.ForeignKey(
-        Employee,
+        'employees.Employee',
         on_delete=models.CASCADE,
         related_name='payslips'
     )

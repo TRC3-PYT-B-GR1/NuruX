@@ -2,7 +2,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import SalaryStructure, PayrollRun, Payslip
-from employees.models import Employee
+from apps.employees.models import Employee
 from .serializers import SalaryStructureSerializer, PayrollRunSerializer, PayslipSerializer
 from decimal import Decimal
 

@@ -1,6 +1,6 @@
 from django.db import models
-from employees.models import Employee
-from core.models import User
+from apps.employees.models import Employee
+from django.conf import settings
 
 class LeaveType(models.TextChoices):
     ANNUAL = 'ANNUAL', 'Annual Leave'
@@ -13,7 +13,7 @@ class LeaveType(models.TextChoices):
 
 class LeaveBalance(models.Model):
     employee = models.ForeignKey(
-        Employee,
+        'employees.Employee',
         on_delete=models.CASCADE,
         related_name='leave_balances'
     )
@@ -44,7 +44,7 @@ class LeaveRequest(models.Model):
         CANCELLED = 'CANCELLED', 'Cancelled'
 
     employee = models.ForeignKey(
-        Employee,
+        'employees.Employee',
         on_delete=models.CASCADE,
         related_name='leave_requests'
     )
@@ -63,14 +63,14 @@ class LeaveRequest(models.Model):
     )
     
     manager_approver = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='manager_leave_approvals'
     )
     hr_approver = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

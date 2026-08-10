@@ -1,5 +1,5 @@
 from django.db import models
-from employees.models import Employee
+from apps.employees.models import Employee
 
 class Shift(models.Model):
     name = models.CharField(max_length=50)
@@ -18,7 +18,7 @@ class Attendance(models.Model):
         REMOTE = 'REMOTE', 'Remote Work'
 
     employee = models.ForeignKey(
-        Employee, 
+        'employees.Employee', 
         on_delete=models.CASCADE,
         related_name='attendance_records'
     )

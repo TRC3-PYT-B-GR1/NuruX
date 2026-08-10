@@ -8,8 +8,9 @@ sys.path.append('c:/Users/USER/NuruX/backend')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
-from core.models import User, Department
-from employees.models import Employee
+from apps.accounts.models import User
+from apps.organizations.models import Department, Role
+from apps.employees.models import Employee
 from attendance.models import Attendance
 from leave.models import LeaveRequest
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -17,24 +18,37 @@ from rest_framework_simplejwt.tokens import RefreshToken
 # Clear existing
 User.objects.all().delete()
 Department.objects.all().delete()
+Role.objects.all().delete()
+Employee.objects.all().delete()
+Attendance.objects.all().delete()
+LeaveRequest.objects.all().delete()
 
 # Departments (Googleplex coords approx 37.422, -122.084)
 eng = Department.objects.create(name="Engineering", latitude=37.422, longitude=-122.084)
 design = Department.objects.create(name="Design", latitude=37.422, longitude=-122.084)
 
+# Roles
+eng_mgr_role = Role.objects.create(title="Engineering Manager", department=eng)
+swe_role = Role.objects.create(title="Software Engineer", department=eng)
+backend_role = Role.objects.create(title="Backend Developer", department=eng)
+
+design_mgr_role = Role.objects.create(title="Design Manager", department=design)
+uiux_role = Role.objects.create(title="UI/UX Designer", department=design)
+prod_design_role = Role.objects.create(title="Product Designer", department=design)
+
 # Users
-manager_user = User.objects.create_user(username="evan", email="evan@nurux.com", password="password", first_name="Evan", last_name="Manager", role="HR")
-emp1_user = User.objects.create_user(username="sarah", email="sarah@nurux.com", password="password", first_name="Sarah", last_name="Johnson", role="EMPLOYEE")
-emp2_user = User.objects.create_user(username="michael", email="michael@nurux.com", password="password", first_name="Michael", last_name="James", role="EMPLOYEE")
-emp3_user = User.objects.create_user(username="david", email="david@nurux.com", password="password", first_name="David", last_name="Okoro", role="EMPLOYEE")
-emp4_user = User.objects.create_user(username="grace", email="grace@nurux.com", password="password", first_name="Grace", last_name="Williams", role="EMPLOYEE")
+manager_user = User.objects.create_user(username="evan", email="evan@nurux.com", password="password", first_name="Evan", last_name="Manager", role="hr_officer")
+emp1_user = User.objects.create_user(username="sarah", email="sarah@nurux.com", password="password", first_name="Sarah", last_name="Johnson", role="employee")
+emp2_user = User.objects.create_user(username="michael", email="michael@nurux.com", password="password", first_name="Michael", last_name="James", role="employee")
+emp3_user = User.objects.create_user(username="david", email="david@nurux.com", password="password", first_name="David", last_name="Okoro", role="employee")
+emp4_user = User.objects.create_user(username="grace", email="grace@nurux.com", password="password", first_name="Grace", last_name="Williams", role="employee")
 
 # Employees
-Employee.objects.create(user=manager_user, department=eng, role_title="Engineering Manager")
-emp1 = Employee.objects.create(user=emp1_user, department=eng, role_title="Software Engineer")
-emp2 = Employee.objects.create(user=emp2_user, department=design, role_title="UI/UX Designer")
-emp3 = Employee.objects.create(user=emp3_user, department=eng, role_title="Backend Developer")
-emp4 = Employee.objects.create(user=emp4_user, department=design, role_title="Product Designer")
+Employee.objects.create(user=manager_user, first_name="Evan", last_name="Manager", department=eng, role=eng_mgr_role)
+emp1 = Employee.objects.create(user=emp1_user, first_name="Sarah", last_name="Johnson", department=eng, role=swe_role)
+emp2 = Employee.objects.create(user=emp2_user, first_name="Michael", last_name="James", department=design, role=uiux_role)
+emp3 = Employee.objects.create(user=emp3_user, first_name="David", last_name="Okoro", department=eng, role=backend_role)
+emp4 = Employee.objects.create(user=emp4_user, first_name="Grace", last_name="Williams", department=design, role=prod_design_role)
 
 # Attendance for today
 today = timezone.now().date()
