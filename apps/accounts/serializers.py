@@ -45,3 +45,10 @@ class LockoutAwareTokenObtainPairSerializer(TokenObtainPairSerializer):
         # Successful login — reset the counter
         user.register_successful_login()
         return data
+
+
+class UserRoleUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "role"]
+        read_only_fields = ["id", "username"]

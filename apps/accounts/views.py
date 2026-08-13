@@ -4,13 +4,15 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from rest_framework import permissions, status
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .serializers import LockoutAwareTokenObtainPairSerializer
+from apps.audit.services import log_action
+
+from .serializers import LockoutAwareTokenObtainPairSerializer, UserRoleUpdateSerializer
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -109,3 +111,48 @@ class PasswordResetConfirmView(APIView):
         user.register_successful_login()  # also clears any lockout
         user.save()
         return Response({"detail": "Password has been reset successfully."})
+
+
+class IsSuperAdminUser(permissions.BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        return bool(user and user.is_authenticated and (user.is_superuser or user.role == "super_admin"))
+
+
+class UserRoleUpdateView(generics.UpdateAPIView):
+    """
+    PATCH /api/v1/auth/users/{id}/role/
+
+    Example:
+        {"role": "hr_officer"}
+
+    Super Admin only.
+
+    Every actual role change is recorded in the audit log.
+    """
+
+    queryset = User.objects.all()
+    serializer_class = UserRoleUpdateSerializer
+    permission_classes = [IsSuperAdminUser]
+
+    def perform_update(self, serializer):
+        user = self.get_object()
+
+        previous_role = user.role
+        new_role = serializer.validated_data.get("role")
+
+        serializer.save()
+
+        if new_role and new_role != previous_role:
+            log_action(
+                actor=self.request.user,
+                action="user.role_changed",
+                target=user,
+                changes={
+                    "role": {
+                        "from": previous_role,
+                        "to": new_role,
+                    }
+                },
+                request=self.request,
+            )

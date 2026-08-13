@@ -1,5 +1,9 @@
-from django.urls import path
+from rest_framework.routers import DefaultRouter
 
-# Intentionally empty for now — Employee CRUD endpoints land in Phase 3.
-# Kept as its own urls module so config/urls.py doesn't need to change later.
-urlpatterns: list = []
+from .views import EmployeeViewSet
+
+
+router = DefaultRouter()
+router.register("", EmployeeViewSet, basename="employee")
+
+urlpatterns = router.urls

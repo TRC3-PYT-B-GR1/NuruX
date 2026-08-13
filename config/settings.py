@@ -30,11 +30,14 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
+    "drf_spectacular",
     # Local apps
     "apps.accounts",
     "apps.employees",
     "apps.organizations",
     "apps.skills",
+    "apps.documents",
+    "apps.audit",
 ]
 
 MIDDLEWARE = [
@@ -106,6 +109,14 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "WorkForge HRMS API",
+    "DESCRIPTION": "Core HR Platform — Phase 1-6 (Auth, Employees, Org Structure, Skills/Certifications, Documents, Audit).",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }
 
 SIMPLE_JWT = {
@@ -136,4 +147,13 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+
+# File uploads (certificate_file on EmployeeCertification — Phase 4).
+# Local disk storage for dev. Production should point this at S3/Cloudinary
+# per the architecture doc's file-storage line — swapping DEFAULT_FILE_STORAGE
+# (or STORAGES on Django 5) is a config change, not a code change, as long as
+# model code keeps using FileField/ImageField rather than raw paths.
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

@@ -39,12 +39,26 @@ class User(AbstractUser):
     def register_failed_login(self):
         from django.conf import settings
 
+        was_locked = self.is_locked
         self.failed_login_attempts += 1
         if self.failed_login_attempts >= settings.MAX_FAILED_LOGIN_ATTEMPTS:
             self.locked_until = timezone.now() + timezone.timedelta(
                 minutes=settings.LOCKOUT_DURATION_MINUTES
             )
         self.save(update_fields=["failed_login_attempts", "locked_until"])
+
+        if self.is_locked and not was_locked:
+            # Local import: apps.audit -> apps.accounts has no reverse
+            # dependency, but importing at module level here would still
+            # run at Django app-loading time before all apps are ready.
+            from apps.audit.services import log_action
+
+            log_action(
+                actor=None,  # the actor is the (unauthenticated) person who failed to log in — nothing to attribute yet
+                action="user.account_locked",
+                target=self,
+                changes={"failed_login_attempts": self.failed_login_attempts},
+            )
 
     def register_successful_login(self):
         self.failed_login_attempts = 0
