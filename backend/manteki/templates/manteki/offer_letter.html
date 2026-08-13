@@ -1,0 +1,29 @@
+<html>
+<head>
+<style>
+  body { font-family: Arial, sans-serif; margin: 40px; }
+  h1 { font-size: 20px; }
+</style>
+</head>
+<body>
+  <h1>Offer of Employment</h1>
+
+  <p>Dear {{ application.applicant.full_name }},</p>
+
+  <p>
+    We are pleased to offer you the position of
+    <strong>{{ application.job.title }}</strong> in the
+    <strong>{{ application.job.department }}</strong> department.
+  </p>
+
+  <p>
+    We were impressed by your background and are excited to have you join our team.
+    Please confirm your acceptance of this offer at your earliest convenience.
+  </p>
+
+  <p>Congratulations, and welcome aboard!</p>
+
+  <p>Sincerely,<br>
+  The Hiring Team</p>
+</body>
+</html>

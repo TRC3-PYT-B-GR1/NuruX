@@ -1,0 +1,7 @@
+<h1>{{ job.title }}</h1>
+<p><strong>Department:</strong> {{ job.department }}</p>
+<p><strong>Posted:</strong> {{ job.date_posted }}</p>
+<p>{{ job.description }}</p>
+
+<a href="{% url 'manteki:apply_to_job' job.id %}">Apply for this job</a>
+<a href="{% url 'manteki:job_list' %}">← Back to all jobs</a>

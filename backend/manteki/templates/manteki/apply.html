@@ -1,0 +1,10 @@
+<h1>Apply for {{ job.title }}</h1>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ applicant_form.as_p }}
+  {{ application_form.as_p }}
+  <button type="submit">Submit Application</button>
+</form>
+
+<a href="{% url 'manteki:job_detail' job.id %}">← Back to job</a>

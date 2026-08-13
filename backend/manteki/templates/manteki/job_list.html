@@ -1,0 +1,12 @@
+<h1>Open Positions</h1>
+
+<ul>
+  {% for job in jobs %}
+    <li>
+      <a href="{% url 'manteki:job_detail' job.id %}">{{ job.title }}</a>
+      — {{ job.department }}
+    </li>
+  {% empty %}
+    <li>No open positions right now.</li>
+  {% endfor %}
+</ul>

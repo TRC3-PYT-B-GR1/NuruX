@@ -1,0 +1,9 @@
+<h1>Schedule Interview for {{ application.applicant.full_name }}</h1>
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Schedule</button>
+</form>
+
+<a href="{% url 'manteki:track_applications' application.job.id %}">← Back to applications</a>

@@ -1,0 +1,45 @@
+<h1>Applications for {{ job.title }}</h1>
+
+<table border="1" cellpadding="8">
+  <tr>
+    <th>Applicant</th>
+    <th>Email</th>
+    <th>Resume</th>
+    <th>Status</th>
+    <th>Update</th>
+  </tr>
+  {% for application in applications %}
+  <tr>
+    <td>{{ application.applicant.full_name }}</td>
+    <td>{{ application.applicant.email }}</td>
+    <td><a href="{{ application.resume.url }}" target="_blank">View</a></td>
+    <td>{{ application.get_status_display }}</td>
+    <td>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="application_id" value="{{ application.id }}">
+        <select name="status">
+          <option value="applied">Applied</option>
+          <option value="under_review">Under Review</option>
+          <option value="interview">Interview</option>
+          <option value="offered">Offered</option>
+          <option value="rejected">Rejected</option>
+          <option value="hired">Hired</option>
+        </select>
+        <button type="submit">Update</button>
+      </form>
+      <a href="{% url 'manteki:schedule_interview' application.id %}">Schedule Interview</a>
+      {% if application.status == 'offered' %}
+        <a href="{% url 'manteki:generate_offer_letter' application.id %}" target="_blank">Generate Offer Letter</a>
+      {% endif %}
+      {% if application.status == 'hired' %}
+        <a href="{% url 'manteki:employee_documents' %}">View Employee Documents</a>
+      {% endif %}
+    </td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="5">No applications yet.</td></tr>
+  {% endfor %}
+</table>
+
+<a href="{% url 'manteki:job_detail' job.id %}">← Back to job</a>

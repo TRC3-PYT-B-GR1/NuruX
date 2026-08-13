@@ -1,0 +1,9 @@
+<h1>Upload Employee Document</h1>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Upload</button>
+</form>
+
+<a href="{% url 'manteki:employee_documents' %}">← View all documents</a>

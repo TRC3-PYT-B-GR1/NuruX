@@ -1,0 +1,22 @@
+<h1>Employee Documents</h1>
+
+<table border="1" cellpadding="8">
+  <tr>
+    <th>Employee</th>
+    <th>Document Type</th>
+    <th>File</th>
+    <th>Uploaded</th>
+  </tr>
+  {% for doc in documents %}
+  <tr>
+    <td>{{ doc.employee_reference }}</td>
+    <td>{{ doc.get_document_type_display }}</td>
+    <td><a href="{{ doc.file.url }}" target="_blank">View</a></td>
+    <td>{{ doc.uploaded_at }}</td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="4">No documents uploaded yet.</td></tr>
+  {% endfor %}
+</table>
+
+<a href="{% url 'manteki:upload_employee_document' %}">+ Upload new document</a>s
