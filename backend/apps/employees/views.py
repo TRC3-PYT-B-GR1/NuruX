@@ -87,8 +87,9 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 subject='Welcome to NuruX',
                 message=(
                     f"Hello {employee.first_name},\n\n"
-                    f"Your NuruX username is {username}. A temporary password was set "
-                    "by HR; obtain it through your organization's secure channel and change it after signing in."
+                    f"Your NuruX username is {username}.\n"
+                    f"Your temporary password is: {data['password']}\n\n"
+                    "Please log in and change your password immediately."
                 ),
                 from_email=None,
                 recipient_list=[user.email],
