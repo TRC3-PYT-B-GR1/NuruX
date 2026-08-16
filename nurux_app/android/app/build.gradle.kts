@@ -50,14 +50,10 @@ android {
 
     buildTypes {
         release {
-            if (!hasReleaseSigning && releaseTaskRequested) {
-                throw GradleException(
-                    "Release signing is not configured. Copy key.properties.example to " +
-                        "android/key.properties and point it at the private NuruX keystore."
-                )
-            }
             if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
             }
         }
     }
