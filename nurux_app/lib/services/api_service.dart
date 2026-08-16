@@ -12,7 +12,7 @@ class ApiService {
     if (_configuredBaseUrl.isNotEmpty) {
       return _configuredBaseUrl.replaceFirst(RegExp(r'/$'), '');
     }
-    if (kReleaseMode) return 'https://nurux-api.onrender.com/api';
+    if (kReleaseMode) return 'https://nurux.duckdns.org/api';
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       return 'http://10.0.2.2:8000/api';
     }
