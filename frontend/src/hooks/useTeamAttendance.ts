@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
-import { format } from 'date-fns';
+import { endOfWeek, format, isWithinInterval, parseISO, startOfWeek } from 'date-fns';
 
 export interface AttendanceRecord {
   id: number;
@@ -17,17 +17,17 @@ export function useTeamAttendance() {
   return useQuery({
     queryKey: ['attendance'],
     queryFn: async () => {
-      const response = await api.get<AttendanceRecord[]>('/attendance/');
-      return response.data;
+      const response = await api.get('/attendance/attendance/');
+      return (response.data.results ? response.data.results : response.data) as AttendanceRecord[];
     },
     select: (data) => {
       // Process data for the dashboard charts and widgets
       const today = new Date();
       const todayStr = format(today, 'yyyy-MM-dd');
       
-      const todaysAttendance = data.filter(r => r.date === todayStr);
-      const clockedIn = todaysAttendance.filter(r => r.clock_in && !r.clock_out).length;
-      const runningLate = todaysAttendance.filter(r => r.status === 'LATE').length;
+      const todaysAttendance = data.filter((record) => record.date === todayStr);
+      const clockedIn = todaysAttendance.filter((record) => record.clock_in && !record.clock_out).length;
+      const runningLate = todaysAttendance.filter((record) => record.status === 'LATE').length;
       
       // Calculate weekly data (dummy calculation for now, just mapping the days)
       const weeklyData = [
@@ -40,14 +40,20 @@ export function useTeamAttendance() {
         { name: 'Sun', present: 0, late: 0, absent: 0 },
       ];
       
-      data.forEach(record => {
+      const currentWeek = {
+        start: startOfWeek(today, { weekStartsOn: 1 }),
+        end: endOfWeek(today, { weekStartsOn: 1 }),
+      };
+      data
+        .filter((record) => isWithinInterval(parseISO(record.date), currentWeek))
+        .forEach((record) => {
         const d = new Date(record.date);
         const dayIndex = (d.getDay() + 6) % 7; // Make Monday 0
         
         if (record.status === 'PRESENT') weeklyData[dayIndex].present++;
         if (record.status === 'LATE') weeklyData[dayIndex].late++;
         if (record.status === 'ABSENT') weeklyData[dayIndex].absent++;
-      });
+        });
 
       return {
         raw: data,

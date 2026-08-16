@@ -14,11 +14,15 @@ class DepartmentSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "description",
             "manager",
             "manager_name",
             "budget",
             "parent_department",
             "parent_department_name",
+            "latitude",
+            "longitude",
+            "geofence_radius_meters",
             "created_at",
             "updated_at",
         ]
@@ -28,11 +32,22 @@ class DepartmentSerializer(serializers.ModelSerializer):
         return str(obj.manager) if obj.manager else None
 
     def validate_parent_department(self, value):
-        # Prevent a department from being its own ancestor.
         instance = getattr(self, "instance", None)
-        if instance and value and value.pk == instance.pk:
-            raise serializers.ValidationError("A department cannot be its own parent.")
+        ancestor = value
+        while instance and ancestor:
+            if ancestor.pk == instance.pk:
+                raise serializers.ValidationError("A department hierarchy cannot contain a cycle.")
+            ancestor = ancestor.parent_department
         return value
+
+    def validate(self, attrs):
+        latitude = attrs.get("latitude", getattr(self.instance, "latitude", None))
+        longitude = attrs.get("longitude", getattr(self.instance, "longitude", None))
+        if (latitude is None) != (longitude is None):
+            raise serializers.ValidationError(
+                "Latitude and longitude must either both be provided or both be empty."
+            )
+        return attrs
 
 
 class RoleSerializer(serializers.ModelSerializer):

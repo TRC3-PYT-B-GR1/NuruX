@@ -11,9 +11,10 @@ interface TableProps {
   columns: Column[];
   data: any[];
   className?: string;
+  isLoading?: boolean;
 }
 
-export function Table({ columns, data, className }: TableProps) {
+export function Table({ columns, data, className, isLoading = false }: TableProps) {
   return (
     <div className={cn("w-full overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm", className)}>
       <table className="w-full text-left text-sm text-slate-600">
@@ -27,7 +28,13 @@ export function Table({ columns, data, className }: TableProps) {
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {data.length === 0 ? (
+          {isLoading ? (
+            <tr>
+              <td colSpan={columns.length} className="px-6 py-8 text-center text-slate-500">
+                Loading…
+              </td>
+            </tr>
+          ) : data.length === 0 ? (
             <tr>
               <td colSpan={columns.length} className="px-6 py-8 text-center text-slate-500">
                 No data available.

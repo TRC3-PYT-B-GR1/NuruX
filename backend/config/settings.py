@@ -1,19 +1,28 @@
 """
-Django settings for the WorkForge HRMS project — Phase 1 (Core Platform Foundations).
+Django settings for the NuruX HRMS project — Phase 1 (Core Platform Foundations).
 """
 from datetime import timedelta
 from pathlib import Path
 
+import os
 import environ
+try:
+    import dj_database_url
+except ImportError:
+    dj_database_url = None
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(DEBUG=(bool, False))
 environ.Env.read_env(BASE_DIR / ".env")
 
-SECRET_KEY = env("SECRET_KEY")
-DEBUG = env("DEBUG")
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+DEBUG = env.bool("DEBUG", default=True)
+SECRET_KEY = env("SECRET_KEY", default="django-insecure-local-development-only")
+ALLOWED_HOSTS = env.list(
+    "ALLOWED_HOSTS",
+    default=["localhost", "127.0.0.1"],
+)
+GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
 
 # -----------------------------------------------------------------------
 # Applications
@@ -34,10 +43,12 @@ INSTALLED_APPS = [
     "payroll",
     "performance",
     "training",
+    "assets",
     "apps.accounts",
     "apps.employees",
     "apps.organizations",
     "apps.skills",
+    "apps.common",
 ]
 
 MIDDLEWARE = [
@@ -50,6 +61,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+if not DEBUG:
+    MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
 
 ROOT_URLCONF = "config.urls"
 
@@ -74,12 +87,21 @@ WSGI_APPLICATION = "config.wsgi.application"
 # -----------------------------------------------------------------------
 # Database — PostgreSQL
 # -----------------------------------------------------------------------
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if os.environ.get("DATABASE_URL") and dj_database_url:
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=env.int("DB_CONN_MAX_AGE", default=600),
+            conn_health_checks=True,
+            ssl_require=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # -----------------------------------------------------------------------
 # Custom user model (PRD §7.1 — Authentication & Access Control)
@@ -105,9 +127,16 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
+    "DEFAULT_THROTTLE_CLASSES": (
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ),
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": env("ANON_THROTTLE_RATE", default="60/min"),
+        "user": env("USER_THROTTLE_RATE", default="300/min"),
+        "ai": env("AI_THROTTLE_RATE", default="10/min"),
+    },
 }
-
-CORS_ALLOW_ALL_ORIGINS = True
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=env.int("ACCESS_TOKEN_LIFETIME_MINUTES", default=15)),
@@ -126,7 +155,11 @@ LOCKOUT_DURATION_MINUTES = env.int("LOCKOUT_DURATION_MINUTES", default=15)
 # -----------------------------------------------------------------------
 # CORS
 # -----------------------------------------------------------------------
-CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:3000"])
+CORS_ALLOWED_ORIGINS = env.list(
+    "CORS_ALLOWED_ORIGINS",
+    default=["http://localhost:5173"],
+)
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 # -----------------------------------------------------------------------
 # I18N / static
@@ -137,4 +170,42 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Attendance policy. Override these values per deployment/organization.
+WORKDAY_START = env("WORKDAY_START", default="09:00")
+WORKDAY_END = env("WORKDAY_END", default="17:00")
+ATTENDANCE_GRACE_MINUTES = env.int("ATTENDANCE_GRACE_MINUTES", default=15)
+
+# Configurable payroll estimates. These are not a substitute for a jurisdictional
+# payroll engine; set verified rates for each deployment before finalizing payroll.
+PAYROLL_TAX_RATE = env("PAYROLL_TAX_RATE", default="0.05")
+PAYROLL_PENSION_RATE = env("PAYROLL_PENSION_RATE", default="0.08")
+PAYROLL_NHF_RATE = env("PAYROLL_NHF_RATE", default="0.025")
+
+# Render terminates TLS at its proxy and forwards the original protocol.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+if not DEBUG:
+    SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
+    SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=3600)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=False)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = "same-origin"
+    X_FRAME_OPTIONS = "DENY"
+
+# -----------------------------------------------------------------------
+# Email Configuration (SMTP)
+# -----------------------------------------------------------------------
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

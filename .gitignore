@@ -5,6 +5,7 @@ __pycache__/
 
 # Django
 backend/db.sqlite3
+backend/staticfiles/
 *.log
 
 # Generated uploads and packaged artifacts
@@ -12,9 +13,15 @@ media/
 *.apk
 *.zip
 *.backup
+*.jks
+*.keystore
+key.properties
+artifacts/
 
 # Environments
 venv/
+.venv/
+.venv-windows/
 env/
 ENV/
 env.bak/

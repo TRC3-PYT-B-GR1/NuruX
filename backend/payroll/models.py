@@ -20,7 +20,10 @@ class SalaryStructure(models.Model):
         return f"Salary Structure for {self.employee}"
 
 class PayrollRun(models.Model):
-    month = models.DateField(help_text="The month and year for this payroll run (usually first day of month)")
+    month = models.DateField(
+        unique=True,
+        help_text="The month and year for this payroll run (use the first day of month)",
+    )
     processed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

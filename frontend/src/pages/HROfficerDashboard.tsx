@@ -6,14 +6,17 @@ import { AnomalyCard } from '../components/ui/AnomalyCard';
 import { useTeamMembers } from '../hooks/useTeamMembers';
 import { useTeamAttendance } from '../hooks/useTeamAttendance';
 import { useAnomalies } from '../hooks/useAnomalies';
+import { useLeave } from '../hooks/useLeave';
 import { cn } from '../lib/utils';
+import { AIInsightsCard } from '../components/ai/AIInsightsCard';
 
 export function HROfficerDashboard() {
   const { data: teamMembers, isLoading: loadingTeam } = useTeamMembers();
   const { data: attendance, isLoading: loadingAttendance } = useTeamAttendance();
   const { anomalies, isLoading: loadingAnomalies } = useAnomalies();
+  const { requests: allLeaves, isLoading: loadingAllLeaves } = useLeave();
 
-  if (loadingTeam || loadingAttendance || loadingAnomalies) {
+  if (loadingTeam || loadingAttendance || loadingAnomalies || loadingAllLeaves) {
     return (
       <div className="flex items-center justify-center h-full min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
@@ -21,16 +24,23 @@ export function HROfficerDashboard() {
     );
   }
 
+  const todayStr = new Date().toISOString().split('T')[0];
+  const onLeaveToday = allLeaves?.filter(req =>
+    req.status.includes('APPROVED') &&
+    req.start_date <= todayStr &&
+    req.end_date >= todayStr
+  ).length || 0;
+
   const tableColumns = [
     {
       header: 'Employee',
       accessor: 'name',
       cell: (row: any) => (
         <div className="flex items-center space-x-3">
-          <Avatar alt={row.user.first_name} size="sm" />
+          <Avatar alt={row.first_name} size="sm" />
           <div>
-            <div className="font-medium text-slate-900">{row.user.first_name} {row.user.last_name}</div>
-            <div className="text-xs text-slate-500">{row.user.email}</div>
+            <div className="font-medium text-slate-900">{row.first_name} {row.last_name}</div>
+            <div className="text-xs text-slate-500">{row.email}</div>
           </div>
         </div>
       )
@@ -38,18 +48,18 @@ export function HROfficerDashboard() {
     {
       header: 'Department',
       accessor: 'department',
-      cell: (row: any) => <span className="text-slate-600">{row.department?.name || 'Unassigned'}</span>
+      cell: (row: any) => <span className="text-slate-600">{row.department_details?.name || 'Unassigned'}</span>
     },
     {
       header: 'Role',
       accessor: 'role',
-      cell: (row: any) => <span className="text-slate-600">{row.job_title}</span>
+      cell: (row: any) => <span className="text-slate-600">{row.role_details?.title || 'Employee'}</span>
     },
     {
       header: 'Status',
       accessor: 'status',
       cell: (row: any) => {
-        const isActive = row.is_active;
+        const isActive = row.status === 'active';
         return (
           <span className={cn(
             "px-2.5 py-1 text-xs font-medium rounded-full",
@@ -64,45 +74,48 @@ export function HROfficerDashboard() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      
+
+      {/* AI Insights */}
+      <AIInsightsCard />
+
       {/* Top Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Total Staff" 
-          value={teamMembers?.length || 0} 
-          subtitle="All departments" 
-          icon={Users} 
-          iconBgColor="bg-indigo-50" 
-          iconColor="text-indigo-600" 
+        <StatCard
+          title="Total Staff"
+          value={teamMembers?.length || 0}
+          subtitle="All departments"
+          icon={Users}
+          iconBgColor="bg-indigo-50"
+          iconColor="text-indigo-600"
         />
-        <StatCard 
-          title="Clocked In" 
-          value={attendance?.clockedIn || 0} 
+        <StatCard
+          title="Clocked In"
+          value={attendance?.clockedIn || 0}
           subtitle="Today"
-          icon={Clock} 
-          iconBgColor="bg-emerald-50" 
-          iconColor="text-emerald-600" 
+          icon={Clock}
+          iconBgColor="bg-emerald-50"
+          iconColor="text-emerald-600"
         />
-        <StatCard 
-          title="On Leave" 
-          value="0" 
-          subtitle="Approved today" 
-          icon={CalendarIcon} 
-          iconBgColor="bg-purple-50" 
-          iconColor="text-purple-600" 
+        <StatCard
+          title="On Leave"
+          value={onLeaveToday}
+          subtitle="Approved today"
+          icon={CalendarIcon}
+          iconBgColor="bg-purple-50"
+          iconColor="text-purple-600"
         />
-        <StatCard 
-          title="Anomalies" 
-          value={anomalies.length} 
-          subtitle="Requires review" 
-          icon={AlertTriangle} 
-          iconBgColor="bg-rose-50" 
-          iconColor="text-rose-600" 
+        <StatCard
+          title="Anomalies"
+          value={anomalies.length}
+          subtitle="Requires review"
+          icon={AlertTriangle}
+          iconBgColor="bg-rose-50"
+          iconColor="text-rose-600"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Main Directory Area */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
@@ -114,9 +127,9 @@ export function HROfficerDashboard() {
               <div className="flex items-center space-x-2">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                  <input 
-                    type="text" 
-                    placeholder="Search..." 
+                  <input
+                    type="text"
+                    placeholder="Search..."
                     className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 w-full sm:w-48"
                   />
                 </div>
@@ -125,11 +138,11 @@ export function HROfficerDashboard() {
                 </button>
               </div>
             </div>
-            
+
             <div className="p-0 flex-1">
-              <Table 
-                columns={tableColumns} 
-                data={teamMembers || []} 
+              <Table
+                columns={tableColumns}
+                data={teamMembers || []}
                 className="border-0 shadow-none rounded-none"
               />
             </div>
@@ -148,7 +161,7 @@ export function HROfficerDashboard() {
                 {anomalies.length} Flags
               </span>
             </div>
-            
+
             <div className="space-y-4 flex-1">
               {anomalies.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-48 text-center">

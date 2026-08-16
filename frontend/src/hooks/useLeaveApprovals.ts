@@ -17,9 +17,10 @@ export function useLeaveApprovals() {
   return useQuery({
     queryKey: ['leave-requests', 'pending'],
     queryFn: async () => {
-      const response = await api.get<LeaveRequest[]>('/leave-requests/');
+      const response = await api.get('/leave/leave-requests/');
+      const data = (response.data.results ? response.data.results : response.data) as LeaveRequest[];
       // Filter for PENDING requests on the client side since we don't have a specific endpoint filter yet
-      return response.data.filter(req => req.status === 'PENDING');
+      return data.filter((req: LeaveRequest) => req.status === 'PENDING');
     }
   });
 }
@@ -29,7 +30,7 @@ export function useApproveLeave() {
   
   return useMutation({
     mutationFn: async ({ id, action }: { id: number, action: 'APPROVE' | 'REJECT' }) => {
-      const response = await api.post(`/leave-requests/${id}/approve_manager/`, { action });
+      const response = await api.post(`/leave/leave-requests/${id}/approve_manager/`, { action });
       return response.data;
     },
     onSuccess: () => {

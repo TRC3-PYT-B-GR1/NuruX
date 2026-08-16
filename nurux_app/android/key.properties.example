@@ -1,0 +1,6 @@
+# Never commit the real key.properties or keystore.
+# Use forward slashes in Windows paths so Java properties parsing does not treat them as escapes.
+storePassword=replace-with-keystore-password
+keyPassword=replace-with-key-password
+keyAlias=nurux
+storeFile=C:/secure/nurux-release.jks

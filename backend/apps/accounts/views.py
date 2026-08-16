@@ -2,6 +2,8 @@ import logging
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import permissions, status
@@ -10,7 +12,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .serializers import LockoutAwareTokenObtainPairSerializer
+from .serializers import ChangePasswordSerializer, LockoutAwareTokenObtainPairSerializer
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -62,6 +64,22 @@ class MeView(APIView):
         )
 
 
+class ChangePasswordView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        if not request.user.check_password(serializer.validated_data['current_password']):
+            return Response(
+                {'current_password': ['Current password is incorrect.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        request.user.set_password(serializer.validated_data['new_password'])
+        request.user.save(update_fields=['password'])
+        return Response({'detail': 'Password changed successfully.'})
+
+
 class PasswordResetRequestView(APIView):
     """
     POST {email} -> 200 always (never reveal whether the email exists).
@@ -104,6 +122,11 @@ class PasswordResetConfirmView(APIView):
 
         if not reset_token_generator.check_token(user, token):
             return Response({"detail": "Invalid or expired reset link."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            validate_password(new_password, user=user)
+        except DjangoValidationError as exc:
+            return Response({'new_password': list(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
 
         user.set_password(new_password)
         user.register_successful_login()  # also clears any lockout

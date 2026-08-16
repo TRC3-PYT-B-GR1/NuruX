@@ -9,7 +9,7 @@ class UserAdmin(DjangoUserAdmin):
     list_display = ("username", "email", "role", "is_active", "is_locked", "last_login")
     list_filter = ("role", "is_active", "is_staff")
     fieldsets = DjangoUserAdmin.fieldsets + (
-        ("WorkForge", {"fields": ("role", "failed_login_attempts", "locked_until")}),
+        ("NuruX", {"fields": ("role", "failed_login_attempts", "locked_until")}),
     )
 
     @admin.display(boolean=True, description="Locked")

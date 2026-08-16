@@ -38,6 +38,10 @@ class Department(models.Model):
     # Geo-fencing coordinates
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    geofence_radius_meters = models.PositiveIntegerField(
+        default=200,
+        help_text="Maximum distance from the department location for attendance scans.",
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -59,7 +59,8 @@ from django.db import models
 
 class Employee(models.Model):
     """
-    Employee/person record for the WorkForge HRMS.
+    Employee/person record for the NuruX HRMS.
+    Links 1:1 with the User model for authentication.
     """
 
     class Status(models.TextChoices):

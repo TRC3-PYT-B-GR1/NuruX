@@ -1,9 +1,19 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 User = get_user_model()
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True, trim_whitespace=False)
+    new_password = serializers.CharField(write_only=True, trim_whitespace=False)
+
+    def validate_new_password(self, value):
+        validate_password(value, user=self.context['request'].user)
+        return value
 
 
 class LockoutAwareTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -26,7 +36,19 @@ class LockoutAwareTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
-        username = attrs.get("username")
+        username_or_email = attrs.get("username", "")
+
+        # Allow login via email by mapping it to the username
+        if "@" in username_or_email:
+            user_by_email = User.objects.filter(email=username_or_email).first()
+            if user_by_email:
+                attrs["username"] = user_by_email.username
+                username = user_by_email.username
+            else:
+                username = username_or_email
+        else:
+            username = username_or_email
+
         user = User.objects.filter(username=username).first()
 
         if user and user.is_locked:
@@ -44,4 +66,12 @@ class LockoutAwareTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         # Successful login — reset the counter
         user.register_successful_login()
+
+        data["user"] = {
+            "username": user.username,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "role": user.role,
+        }
         return data

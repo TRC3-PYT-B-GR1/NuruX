@@ -40,3 +40,48 @@ class IsAdminOrHRWriteElseReadOnly(BasePermission):
         if request.method in SAFE_METHODS:
             return True
         return user.is_superuser or user.role in self.allowed_roles
+
+
+class IsExecutive(BasePermission):
+    """Allow only platform administrators and directors/executives."""
+
+    allowed_roles = {"super_admin", "director"}
+
+    def has_permission(self, request, view):
+        user = request.user
+        return bool(
+            user
+            and user.is_authenticated
+            and (user.is_superuser or user.role in self.allowed_roles)
+        )
+
+
+class IsPayrollAdminOrReadOnlyExecutive(BasePermission):
+    """Payroll staff administer payroll; directors may only read reports."""
+
+    payroll_roles = {"super_admin", "payroll_officer"}
+    read_roles = payroll_roles | {"director"}
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not (user and user.is_authenticated):
+            return False
+        if user.is_superuser:
+            return True
+        if request.method in SAFE_METHODS:
+            return user.role in self.read_roles
+        return user.role in self.payroll_roles
+
+
+class IsManagerOrHR(BasePermission):
+    """Allow staff who are authorized to manage people records."""
+
+    allowed_roles = {"super_admin", "hr_officer", "manager", "director"}
+
+    def has_permission(self, request, view):
+        user = request.user
+        return bool(
+            user
+            and user.is_authenticated
+            and (user.is_superuser or user.role in self.allowed_roles)
+        )

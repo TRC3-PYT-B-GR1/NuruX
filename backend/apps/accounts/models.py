@@ -5,7 +5,7 @@ from django.utils import timezone
 
 class User(AbstractUser):
     """
-    Custom user model. Every logged-in person in WorkForge — regardless of
+    Custom user model. Every logged-in person in NuruX — regardless of
     whether they end up with a full Employee record — authenticates through
     this model. `role` drives RBAC enforcement at the API layer (PRD §8).
     """
@@ -18,6 +18,7 @@ class User(AbstractUser):
         DIRECTOR = "director", "Director/Executive"
         EMPLOYEE = "employee", "Employee"
         APPLICANT = "applicant", "Applicant"
+        RECEPTIONIST = "receptionist", "Receptionist"
 
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=32, choices=Role.choices, default=Role.EMPLOYEE)
