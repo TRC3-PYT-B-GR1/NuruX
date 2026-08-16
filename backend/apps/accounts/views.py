@@ -81,23 +81,35 @@ class ChangePasswordView(APIView):
 
 
 class PasswordResetRequestView(APIView):
-    """
-    POST {email} -> 200 always (never reveal whether the email exists).
-    Issues a uid/token pair. Wiring this to an actual email backend is a
-    Phase-2 Notifications concern — for now it logs the reset link so the
-    flow is testable end-to-end.
-    """
+    """POST {email} -> 200 always (never reveal whether the email exists)."""
 
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        email = request.data.get("email", "")
+        email = request.data.get("email", "").strip()
         user = User.objects.filter(email__iexact=email).first()
         if user:
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = reset_token_generator.make_token(user)
-            # Phase 2 (Notifications module) will replace this with a real email send.
-            logger.info("Password reset link for %s: /reset-password/%s/%s/", user.email, uid, token)
+            reset_url = f"https://nurux.duckdns.org/reset-password/{uid}/{token}/"
+            logger.info("Password reset link for %s: %s", user.email, reset_url)
+            try:
+                from django.core.mail import send_mail
+                from django.conf import settings
+                send_mail(
+                    subject="NuruX Password Reset",
+                    message=(
+                        f"Hello {user.first_name or user.username},\n\n"
+                        f"A password reset was requested for your NuruX account.\n\n"
+                        f"Click the link below to reset your password:\n{reset_url}\n\n"
+                        "If you did not request this, please ignore this email."
+                    ),
+                    from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None) or None,
+                    recipient_list=[user.email],
+                    fail_silently=True,
+                )
+            except Exception:
+                logger.exception("Failed to send password reset email to %s", user.email)
         return Response({"detail": "If that email exists, a reset link has been sent."})
 
 
