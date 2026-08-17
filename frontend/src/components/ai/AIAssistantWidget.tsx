@@ -134,6 +134,11 @@ export function AIAssistantWidget() {
 
           {/* Input Area */}
           <div className="p-4 bg-white border-t border-slate-200">
+            <div className="mb-2 flex gap-2 overflow-x-auto">
+              {['How is attendance today?', 'Any pending leave?', 'Summarize payroll'].map((prompt) => (
+                <button key={prompt} onClick={() => setInput(prompt)} className="whitespace-nowrap rounded-full border border-slate-200 px-2.5 py-1 text-[10px] text-slate-500 hover:border-blue-300 hover:text-blue-600">{prompt}</button>
+              ))}
+            </div>
             <div className="flex items-center space-x-2">
               <input
                 type="text"

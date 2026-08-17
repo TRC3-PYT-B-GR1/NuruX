@@ -26,7 +26,11 @@ export function StaffManagement() {
 
   // Add Employee Form State
   const [empForm, setEmpForm] = useState({
-    first_name: '', last_name: '', email: '', password: '', department: '', role: '', rbac_role: 'employee'
+    first_name: '', last_name: '', email: '', password: '', phone: '', address: '', date_of_birth: '',
+    gender: '', nationality: 'Nigerian', identification_number: '', employment_type: 'full_time', salary_grade: '',
+    emergency_contact_name: '', emergency_contact_relationship: '', emergency_contact_phone: '', emergency_contact_address: '',
+    next_of_kin_name: '', next_of_kin_relationship: '', next_of_kin_phone: '', next_of_kin_address: '',
+    department: '', role: '', manager: '', rbac_role: 'employee'
   });
 
   // Create Department Form State
@@ -46,7 +50,7 @@ export function StaffManagement() {
     try {
       await addEmployee(empForm);
       setShowAddEmployee(false);
-      setEmpForm({ first_name: '', last_name: '', email: '', password: '', department: '', role: '', rbac_role: 'employee' });
+      setEmpForm({ first_name: '', last_name: '', email: '', password: '', phone: '', address: '', date_of_birth: '', gender: '', nationality: 'Nigerian', identification_number: '', employment_type: 'full_time', salary_grade: '', emergency_contact_name: '', emergency_contact_relationship: '', emergency_contact_phone: '', emergency_contact_address: '', next_of_kin_name: '', next_of_kin_relationship: '', next_of_kin_phone: '', next_of_kin_address: '', department: '', role: '', manager: '', rbac_role: 'employee' });
     } catch (error: any) {
       const msg = error.response?.data?.detail || error.response?.data?.username?.[0] || error.message || 'Failed to add employee';
       alert(`Error: ${msg}`);
@@ -262,6 +266,7 @@ export function StaffManagement() {
                             {emp.first_name} {emp.last_name}
                           </div>
                           <div className="text-sm text-slate-400">{emp.email}</div>
+                          {emp.phone && <div className="text-xs text-slate-500">{emp.phone}</div>}
                         </div>
                       </div>
                     </td>
@@ -269,7 +274,8 @@ export function StaffManagement() {
                       {emp.department_details?.name || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
-                      {emp.role_details?.title || '-'}
+                      <div>{emp.role_details?.title || '-'}</div>
+                      <div className="text-xs text-slate-500">{emp.employment_type?.replace('_', ' ') || 'Full time'} {emp.salary_grade ? `· ${emp.salary_grade}` : ''}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                       {emp.date_joined ? new Date(emp.date_joined).toLocaleDateString() : '-'}
@@ -314,6 +320,61 @@ export function StaffManagement() {
                   <input required type="text" value={empForm.last_name} onChange={e => setEmpForm({...empForm, last_name: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white" />
                 </div>
               </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <input placeholder="Gender" value={empForm.gender} onChange={e => setEmpForm({...empForm, gender: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white" />
+                <input placeholder="Nationality" value={empForm.nationality} onChange={e => setEmpForm({...empForm, nationality: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white" />
+                <input placeholder="ID / NIN" value={empForm.identification_number} onChange={e => setEmpForm({...empForm, identification_number: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Phone</label>
+                  <input type="tel" value={empForm.phone} onChange={e => setEmpForm({...empForm, phone: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Date of Birth</label>
+                  <input type="date" value={empForm.date_of_birth} onChange={e => setEmpForm({...empForm, date_of_birth: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Employment Type</label>
+                  <select value={empForm.employment_type} onChange={e => setEmpForm({...empForm, employment_type: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white">
+                    <option value="full_time">Full time</option><option value="part_time">Part time</option><option value="contract">Contract</option><option value="temporary">Temporary</option><option value="intern">Intern</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Salary Grade</label>
+                  <input type="text" placeholder="e.g. GL 08" value={empForm.salary_grade} onChange={e => setEmpForm({...empForm, salary_grade: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">Address</label>
+                <textarea rows={2} value={empForm.address} onChange={e => setEmpForm({...empForm, address: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white resize-none" />
+              </div>
+
+              <div className="border-t border-slate-800 pt-4">
+                <h3 className="mb-3 text-sm font-semibold text-slate-200">Emergency contact</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <input placeholder="Full name" value={empForm.emergency_contact_name} onChange={e => setEmpForm({...empForm, emergency_contact_name: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white" />
+                  <input placeholder="Relationship" value={empForm.emergency_contact_relationship} onChange={e => setEmpForm({...empForm, emergency_contact_relationship: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white" />
+                  <input placeholder="Phone" value={empForm.emergency_contact_phone} onChange={e => setEmpForm({...empForm, emergency_contact_phone: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white" />
+                  <input placeholder="Address" value={empForm.emergency_contact_address} onChange={e => setEmpForm({...empForm, emergency_contact_address: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white" />
+                </div>
+              </div>
+
+              <div className="border-t border-slate-800 pt-4">
+                <h3 className="mb-3 text-sm font-semibold text-slate-200">Next of kin</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <input placeholder="Full name" value={empForm.next_of_kin_name} onChange={e => setEmpForm({...empForm, next_of_kin_name: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white" />
+                  <input placeholder="Relationship" value={empForm.next_of_kin_relationship} onChange={e => setEmpForm({...empForm, next_of_kin_relationship: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white" />
+                  <input placeholder="Phone" value={empForm.next_of_kin_phone} onChange={e => setEmpForm({...empForm, next_of_kin_phone: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white" />
+                  <input placeholder="Address" value={empForm.next_of_kin_address} onChange={e => setEmpForm({...empForm, next_of_kin_address: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white" />
+                </div>
+              </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -339,6 +400,14 @@ export function StaffManagement() {
                 <select required value={empForm.role} onChange={e => setEmpForm({...empForm, role: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white">
                   <option value="">Select Role</option>
                   {roles.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">Line Manager</label>
+                <select value={empForm.manager} onChange={e => setEmpForm({...empForm, manager: e.target.value})} className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white">
+                  <option value="">No manager assigned</option>
+                  {employees.filter(manager => manager.id !== 0).map(manager => <option key={manager.id} value={manager.id}>{manager.first_name} {manager.last_name}</option>)}
                 </select>
               </div>
 

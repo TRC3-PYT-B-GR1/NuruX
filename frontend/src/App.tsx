@@ -12,6 +12,7 @@ const StaffManagement = lazy(() => import('./pages/StaffManagement').then((modul
 const AttendanceDashboard = lazy(() => import('./pages/AttendanceDashboard').then((module) => ({ default: module.AttendanceDashboard })));
 const LeaveDashboard = lazy(() => import('./pages/LeaveDashboard').then((module) => ({ default: module.LeaveDashboard })));
 const ReportsPage = lazy(() => import('./pages/ReportsPage').then((module) => ({ default: module.ReportsPage })));
+const RecruitmentPage = lazy(() => import('./pages/RecruitmentPage'));
 const KioskMode = lazy(() => import('./pages/KioskMode').then((module) => ({ default: module.KioskMode })));
 const ReceptionistDashboard = lazy(() => import('./pages/ReceptionistDashboard').then((module) => ({ default: module.ReceptionistDashboard })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((module) => ({ default: module.SettingsPage })));
@@ -79,6 +80,7 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={['manager', 'director', 'super_admin', 'hr_officer']} />}>
           <Route path="/staff" element={<StaffManagement />} />
           <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/recruitment" element={<RecruitmentPage />} />
         </Route>
 
         {/* Executives & Super Admin */}

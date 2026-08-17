@@ -4,6 +4,7 @@ import {
   Sun, LayoutDashboard, Users, Clock,
   Calendar, FileText, Settings, HelpCircle, LogOut, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
+import { BriefcaseBusiness } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { RootState } from '../../store';
 import { logout } from '../../store/authSlice';
@@ -26,6 +27,7 @@ const navItems: NavItem[] = [
   { name: 'Leave', icon: Calendar, path: '/leave', roles: ['super_admin', 'director', 'manager', 'hr_officer', 'payroll_officer', 'employee'] },
   { name: 'Reception', icon: Clock, path: '/reception', roles: ['super_admin', 'director', 'manager', 'hr_officer', 'receptionist'] },
   { name: 'Reports', icon: FileText, path: '/reports', roles: ['super_admin', 'director', 'hr_officer', 'manager'] },
+  { name: 'Recruitment', icon: BriefcaseBusiness, path: '/recruitment', roles: ['super_admin', 'director', 'hr_officer', 'manager'] },
   { name: 'Settings', icon: Settings, path: '/settings', roles: ['super_admin', 'director', 'manager', 'hr_officer', 'payroll_officer', 'employee', 'receptionist'] },
 ];
 

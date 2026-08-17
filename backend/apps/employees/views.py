@@ -11,8 +11,12 @@ from rest_framework.views import APIView
 from apps.common.permissions import IsAdminOrHR, IsManagerOrHR
 from apps.organizations.models import Department
 from attendance.models import Attendance
-from .models import Employee
-from .serializers import EmployeeCreateSerializer, EmployeeSerializer
+from .models import Certification, EducationRecord, Employee, EmployeeSkill, EmploymentHistory, PromotionHistory
+from .serializers import (
+    CertificationApiSerializer, EducationRecordApiSerializer, EmployeeCreateSerializer,
+    EmployeeSerializer, EmployeeSkillApiSerializer, EmploymentHistoryApiSerializer,
+    PromotionHistoryApiSerializer,
+)
 
 User = get_user_model()
 
@@ -31,7 +35,9 @@ class EmployeeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = Employee.objects.select_related('department', 'role', 'user')
+        queryset = Employee.objects.select_related('department', 'role', 'user', 'manager').prefetch_related(
+            'employment_history', 'education_records', 'certifications', 'skills', 'promotion_history'
+        )
         if user.is_superuser or user.role in {'super_admin', 'hr_officer', 'director'}:
             return queryset.all()
         if user.role == 'manager':
@@ -80,6 +86,23 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             role=data['role'],
             date_joined=timezone.localdate(),
             status=Employee.Status.ACTIVE,
+            phone=data.get('phone', ''),
+            address=data.get('address', ''),
+            date_of_birth=data.get('date_of_birth'),
+            gender=data.get('gender', ''),
+            nationality=data.get('nationality', ''),
+            identification_number=data.get('identification_number', ''),
+            employment_type=data.get('employment_type', Employee.EmploymentType.FULL_TIME),
+            salary_grade=data.get('salary_grade', ''),
+            manager=data.get('manager'),
+            emergency_contact_name=data.get('emergency_contact_name', ''),
+            emergency_contact_relationship=data.get('emergency_contact_relationship', ''),
+            emergency_contact_phone=data.get('emergency_contact_phone', ''),
+            emergency_contact_address=data.get('emergency_contact_address', ''),
+            next_of_kin_name=data.get('next_of_kin_name', ''),
+            next_of_kin_relationship=data.get('next_of_kin_relationship', ''),
+            next_of_kin_phone=data.get('next_of_kin_phone', ''),
+            next_of_kin_address=data.get('next_of_kin_address', ''),
         )
 
         transaction.on_commit(
@@ -148,3 +171,50 @@ class EmployeeMetricsView(APIView):
                 if item['employee__department__name']
             ],
         })
+
+
+class EmployeeRecordViewSet(viewsets.ModelViewSet):
+    """CRUD for profile history records, scoped to the employee's permissions."""
+    permission_classes = [permissions.IsAuthenticated]
+    model = None
+    serializer_class = None
+
+    def get_permissions(self):
+        if self.action in {'create', 'update', 'partial_update', 'destroy'}:
+            return [permissions.IsAuthenticated(), IsAdminOrHR()]
+        return super().get_permissions()
+
+    def get_queryset(self):
+        queryset = self.model.objects.select_related('employee')
+        user = self.request.user
+        if user.is_superuser or user.role in {'super_admin', 'hr_officer', 'director'}:
+            return queryset
+        profile = getattr(user, 'employee_profile', None)
+        if user.role == 'manager' and profile and profile.department_id:
+            return queryset.filter(employee__department_id=profile.department_id)
+        return queryset.filter(employee=profile) if profile else queryset.none()
+
+
+class EmploymentHistoryViewSet(EmployeeRecordViewSet):
+    model = EmploymentHistory
+    serializer_class = EmploymentHistoryApiSerializer
+
+
+class EducationRecordViewSet(EmployeeRecordViewSet):
+    model = EducationRecord
+    serializer_class = EducationRecordApiSerializer
+
+
+class CertificationViewSet(EmployeeRecordViewSet):
+    model = Certification
+    serializer_class = CertificationApiSerializer
+
+
+class EmployeeSkillViewSet(EmployeeRecordViewSet):
+    model = EmployeeSkill
+    serializer_class = EmployeeSkillApiSerializer
+
+
+class PromotionHistoryViewSet(EmployeeRecordViewSet):
+    model = PromotionHistory
+    serializer_class = PromotionHistoryApiSerializer

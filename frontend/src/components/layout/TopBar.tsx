@@ -1,4 +1,4 @@
-import { Search, Bell, ChevronDown, LogOut, Settings } from 'lucide-react';
+import { Search, Bell, ChevronDown, LogOut, Settings, CheckCheck } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +12,7 @@ export function TopBar() {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{ id: number; title: string; body: string; time: string; read: boolean; path: string }>>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
 
@@ -27,6 +28,15 @@ export function TopBar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    api.get('/notifications/').then(({ data }) => {
+      const rows = Array.isArray(data) ? data : data.results || [];
+      setNotifications(rows.map((item: { id: number; title: string; body: string; path?: string; read: boolean; created_at: string }) => ({
+        id: item.id, title: item.title, body: item.body, path: item.path || '/reports', read: item.read, time: new Date(item.created_at).toLocaleString(),
+      })));
+    }).catch(() => setNotifications([]));
+  }, [user?.id]);
 
   const handleLogout = async () => {
     const refresh = localStorage.getItem('nuru_refresh_token');
@@ -64,7 +74,7 @@ export function TopBar() {
             className="text-slate-400 hover:text-slate-500 transition-colors relative"
             onClick={() => setIsNotificationOpen(!isNotificationOpen)}
           >
-            <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+            {notifications.some((notification) => !notification.read) && <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>}
             <Bell className="h-5 w-5" />
           </button>
 
@@ -73,30 +83,20 @@ export function TopBar() {
             <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-slate-100 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center">
                 <p className="text-sm font-semibold text-slate-900">Notifications</p>
-                <span className="text-xs text-blue-600 hover:text-blue-700 cursor-pointer font-medium">Mark all read</span>
+                <button onClick={() => { void api.post('/notifications/mark-all-read/'); setNotifications((items) => items.map((item) => ({ ...item, read: true }))); }} className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"><CheckCheck className="h-3 w-3" /> Mark all read</button>
               </div>
               <div className="max-h-64 overflow-y-auto">
-                <div className="px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer">
-                  <p className="text-sm text-slate-800 font-medium">Leave Request</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Jane Doe applied for Sick Leave.</p>
-                  <p className="text-[10px] text-slate-400 mt-1">10 minutes ago</p>
-                </div>
-                <div className="px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer bg-blue-50/30">
-                  <p className="text-sm text-slate-800 font-medium flex items-center">
-                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></span>
-                    Attendance Alert
-                  </p>
-                  <p className="text-xs text-slate-500 mt-0.5">3 employees are marked as late today.</p>
-                  <p className="text-[10px] text-slate-400 mt-1">1 hour ago</p>
-                </div>
-                <div className="px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer">
-                  <p className="text-sm text-slate-800 font-medium">System Update</p>
-                  <p className="text-xs text-slate-500 mt-0.5">NuruX platform has been updated to v1.2</p>
-                  <p className="text-[10px] text-slate-400 mt-1">Yesterday</p>
-                </div>
+                {notifications.length === 0 && <p className="px-4 py-8 text-center text-xs text-slate-400">No notifications yet</p>}
+                {notifications.map((notification) => (
+                  <button key={notification.id} onClick={() => { void api.post(`/notifications/${notification.id}/mark-read/`); setNotifications((items) => items.map((item) => item.id === notification.id ? { ...item, read: true } : item)); setIsNotificationOpen(false); navigate(notification.path); }} className={`w-full px-4 py-3 text-left border-b border-slate-50 hover:bg-slate-50 transition-colors ${notification.read ? '' : 'bg-blue-50/30'}`}>
+                    <p className="flex items-center text-sm font-medium text-slate-800">{!notification.read && <span className="mr-2 h-1.5 w-1.5 rounded-full bg-blue-500" />}{notification.title}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">{notification.body}</p>
+                    <p className="mt-1 text-[10px] text-slate-400">{notification.time}</p>
+                  </button>
+                ))}
               </div>
               <div className="px-4 py-2 border-t border-slate-100 text-center">
-                <button className="text-xs text-slate-500 hover:text-slate-700 font-medium">
+                <button onClick={() => setIsNotificationOpen(false)} className="text-xs text-slate-500 hover:text-slate-700 font-medium">
                   View all notifications
                 </button>
               </div>

@@ -12,6 +12,27 @@ export function ReportsPage() {
   const { data: attendance, isLoading: loadingAttendance } = useTeamAttendance();
   const { anomalies, isLoading: loadingAnomalies } = useAnomalies();
   const [activeTab, setActiveTab] = useState<'attendance' | 'anomalies'>('attendance');
+  const [search, setSearch] = useState('');
+
+  const attendanceRows = attendance?.raw || [];
+  const filteredAttendance = attendanceRows.filter((row) =>
+    row.employee_name.toLowerCase().includes(search.toLowerCase()) || row.status.toLowerCase().includes(search.toLowerCase()),
+  );
+  const filteredAnomalies = (anomalies || []).filter((row) => row.employee_name.toLowerCase().includes(search.toLowerCase()));
+  const completedAttendance = attendanceRows.filter((row) => ['PRESENT', 'LATE', 'REMOTE'].includes(row.status)).length;
+  const attendanceRate = attendanceRows.length ? Math.round((completedAttendance / attendanceRows.length) * 100) : 0;
+
+  const exportCsv = () => {
+    const csv = [['Employee', 'Date', 'Clock In', 'Clock Out', 'Status'], ...filteredAttendance.map((row) => [row.employee_name, row.date, row.clock_in || '', row.clock_out || '', row.status])]
+      .map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(','))
+      .join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `nurux-attendance-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   const attendanceColumns = [
     {
@@ -88,7 +109,7 @@ export function ReportsPage() {
           <p className="text-sm text-slate-500 mt-1">Generate payroll reports and audit attendance anomalies.</p>
         </div>
         <div className="flex items-center space-x-3">
-          <Button variant="outline" className="flex items-center space-x-2">
+          <Button variant="outline" className="flex items-center space-x-2" onClick={exportCsv} disabled={loadingAttendance}>
             <Download className="w-4 h-4" />
             <span>Export CSV</span>
           </Button>
@@ -107,16 +128,16 @@ export function ReportsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard 
           title="Total Reports" 
-          value="24" 
-          subtitle="Generated this month" 
+          value={attendanceRows.length}
+          subtitle="Attendance records loaded"
           icon={FileText} 
           iconBgColor="bg-blue-50" 
           iconColor="text-blue-600" 
         />
         <StatCard 
           title="Average Attendance" 
-          value="94%" 
-          subtitle="+2% from last month" 
+          value={`${attendanceRate}%`}
+          subtitle="Present, late, or remote records"
           icon={TrendingUp} 
           iconBgColor="bg-emerald-50" 
           iconColor="text-emerald-600" 
@@ -154,7 +175,9 @@ export function ReportsPage() {
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
             <input 
-              type="text" 
+              type="text"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
               placeholder="Search records..." 
               className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 w-full bg-white"
             />
@@ -169,14 +192,14 @@ export function ReportsPage() {
           {activeTab === 'attendance' ? (
             <Table 
               columns={attendanceColumns} 
-              data={attendance?.raw || []} 
+              data={filteredAttendance}
               isLoading={loadingAttendance}
               className="border-0 shadow-none rounded-none"
             />
           ) : (
             <Table 
               columns={anomalyColumns} 
-              data={anomalies || []} 
+              data={filteredAnomalies}
               isLoading={loadingAnomalies}
               className="border-0 shadow-none rounded-none"
             />
