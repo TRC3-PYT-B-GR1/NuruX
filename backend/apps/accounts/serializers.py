@@ -36,11 +36,12 @@ class LockoutAwareTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
-        username_or_email = attrs.get("username", "")
+        username_or_email = str(attrs.get("username", "")).strip()
+        attrs["username"] = username_or_email
 
         # Allow login via email by mapping it to the username
         if "@" in username_or_email:
-            user_by_email = User.objects.filter(email=username_or_email).first()
+            user_by_email = User.objects.filter(email__iexact=username_or_email).first()
             if user_by_email:
                 attrs["username"] = user_by_email.username
                 username = user_by_email.username
