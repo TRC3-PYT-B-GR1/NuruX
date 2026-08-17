@@ -51,11 +51,18 @@ class AIBaseView(APIView):
     def generate(self, prompt):
         if not settings.GEMINI_API_KEY:
             return None
-        from google import genai
+        try:
+            from google import genai
 
-        client = genai.Client(api_key=settings.GEMINI_API_KEY)
-        response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
-        return response.text
+            client = genai.Client(api_key=settings.GEMINI_API_KEY)
+            response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+            return response.text
+        except Exception:
+            # Keep the dashboard useful when the optional provider is unavailable,
+            # rate-limited, or configured with an expired key. Callers provide a
+            # deterministic aggregate-metrics fallback when this returns None.
+            logger.exception('Gemini generation failed; using local AI fallback')
+            return None
 
     def hr_context(self):
         """Build a small, permission-safe snapshot for the presentation assistant."""
