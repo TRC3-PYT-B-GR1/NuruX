@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.core.validators import FileExtensionValidator
 
 
 class JobPosting(models.Model):
@@ -36,6 +37,12 @@ class Candidate(models.Model):
     phone = models.CharField(max_length=30, blank=True)
     stage = models.CharField(max_length=20, choices=Stage.choices, default=Stage.APPLIED)
     score = models.PositiveSmallIntegerField(default=0)
+    resume = models.FileField(
+        upload_to="recruitment/resumes/",
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(allowed_extensions=["pdf", "doc", "docx"])],
+    )
     applied_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

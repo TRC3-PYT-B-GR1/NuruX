@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Download, LockKeyhole, Mail, ShieldCheck, Smartphone, SunMedium } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLatestAppVersion } from '../hooks/useLatestAppVersion';
 import { api } from '../lib/api';
 import type { RootState } from '../store';
@@ -160,9 +160,10 @@ export function Login() {
           </div>
         </div>
 
-        <p className="text-center text-xs leading-5 text-slate-400 lg:text-left">
-          Having trouble signing in? <span className="font-semibold text-slate-600">Contact HR support.</span>
-        </p>
+        <div className="flex flex-col gap-2 text-center text-xs leading-5 text-slate-400 sm:flex-row sm:items-center sm:justify-between lg:text-left">
+          <p>Having trouble signing in? <span className="font-semibold text-slate-600">Contact HR support.</span></p>
+          <Link to="/careers" className="font-semibold text-emerald-600 hover:text-emerald-700">View open positions</Link>
+        </div>
       </section>
 
       <aside className="relative hidden overflow-hidden bg-slate-950 p-12 text-white lg:flex lg:flex-col lg:justify-between xl:p-16">

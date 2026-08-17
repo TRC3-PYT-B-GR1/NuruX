@@ -13,6 +13,9 @@ const AttendanceDashboard = lazy(() => import('./pages/AttendanceDashboard').the
 const LeaveDashboard = lazy(() => import('./pages/LeaveDashboard').then((module) => ({ default: module.LeaveDashboard })));
 const ReportsPage = lazy(() => import('./pages/ReportsPage').then((module) => ({ default: module.ReportsPage })));
 const RecruitmentPage = lazy(() => import('./pages/RecruitmentPage'));
+const PerformancePage = lazy(() => import('./pages/PerformancePage'));
+const CareersPage = lazy(() => import('./pages/CareersPage'));
+const CareerApplicationPage = lazy(() => import('./pages/CareerApplicationPage'));
 const KioskMode = lazy(() => import('./pages/KioskMode').then((module) => ({ default: module.KioskMode })));
 const ReceptionistDashboard = lazy(() => import('./pages/ReceptionistDashboard').then((module) => ({ default: module.ReceptionistDashboard })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((module) => ({ default: module.SettingsPage })));
@@ -46,6 +49,8 @@ function App() {
         <Routes>
         {/* Public Route */}
         <Route path="/login" element={<Login />} />
+        <Route path="/careers" element={<CareersPage />} />
+        <Route path="/careers/:jobId" element={<CareerApplicationPage />} />
         <Route path="/mobile" element={<Navigate to="/app" replace />} />
 
         {/* Protected Routes (Wrapped in DashboardLayout via ProtectedRoute) */}
@@ -81,6 +86,7 @@ function App() {
           <Route path="/staff" element={<StaffManagement />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/recruitment" element={<RecruitmentPage />} />
+          <Route path="/performance" element={<PerformancePage />} />
         </Route>
 
         {/* Executives & Super Admin */}
